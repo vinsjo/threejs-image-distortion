@@ -1,0 +1,21 @@
+:root {
+	--main-font: Arial, Helvetica, sans-serif;
+	--body-background: #2327a9;
+}
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+html body {
+	overflow-x: hidden;
+	min-height: 100vh;
+	width: 100vw;
+}
+body {
+	font-family: var(--main-font);
+	background-color: var(--body-background);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
