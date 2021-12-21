@@ -2,43 +2,42 @@ import * as THREE from 'https://threejs.org/build/three.module.js';
 import { fragShader, vertShader, createShaderMaterial } from './shaders.js';
 
 (async function () {
-	const dpr = window.devicePixelRatio || 1;
+	const dpr = 1;
+	// const dpr = window.devicePixelRatio;
 
 	const scene = new THREE.Scene();
 	const clock = new THREE.Clock();
-	const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
-	const camera = new THREE.PerspectiveCamera(
-		50,
-		window.innerWidth / window.innerHeight,
-		0.01,
-		10
-	);
+	const renderer = new THREE.WebGLRenderer({
+		alpha: true,
+		antialias: false,
+	});
 
-	camera.position.set(0, 0, 1);
-	camera.lookAt(0, 0, 0);
+	const camera = new THREE.OrthographicCamera();
 
 	renderer.setPixelRatio(dpr);
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
 	$('.threejs-container').append(renderer.domElement);
 
-	$(window).on('resize', () => {
-		camera.aspect = window.innerWidth / window.innerHeight;
-		camera.updateProjectionMatrix();
-		renderer.setSize(window.innerWidth, window.innerHeight);
-	});
+	const rows = 5;
+	const cols = Math.floor((window.innerWidth / window.innerHeight) * rows);
 
 	const textureImage = await createImageGrid(
 		['../assets/smiley.svg', '../assets/smiley-nofill.svg'],
-		8,
-		Math.floor((window.screen.width / window.screen.height) * 8),
-		new THREE.Vector2(window.screen.width, window.screen.height),
-		0
+		rows,
+		cols,
+		new THREE.Vector2(window.innerWidth * dpr, window.innerHeight * dpr),
+		0.3
 	);
 
 	const mesh = new THREE.Mesh(
-		new THREE.PlaneGeometry(camera.aspect, 1, 32, 32),
-		createShaderMaterial(textureImage, 0.15, 3, 0.2)
+		new THREE.PlaneGeometry(
+			(window.innerWidth / window.innerHeight) * 2,
+			2,
+			1,
+			1
+		),
+		createShaderMaterial(textureImage, 0.3, 5, 0.2)
 	);
 
 	scene.add(mesh);
@@ -53,7 +52,13 @@ import { fragShader, vertShader, createShaderMaterial } from './shaders.js';
 		}
 		requestAnimationFrame(animate);
 	}
+
 	animate();
+
+	$(window).on('resize', () => {
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+	});
 })();
 
 async function createImageGrid(
