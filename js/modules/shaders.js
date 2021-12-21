@@ -9,9 +9,11 @@ uniform sampler2D uTexture;
 uniform float uNoiseSpeed;
 uniform float uNoiseFreq;
 uniform float uNoiseAmp;
+uniform vec4 uColor;
 
 vec2 incidentVec;
 vec2 normalVec;
+vec4 color;
 float strength;
 
 ////////////////////////////////////////////////////////////
@@ -67,7 +69,9 @@ void main() {
     1.0 / 1.333
   );
 
-  gl_FragColor = texture2D(uTexture, uv);
+  vec4 color = texture2D(uTexture, uv) * uColor;
+
+  gl_FragColor = color;
 }`;
 
 const vertShader = `
@@ -85,7 +89,8 @@ function createShaderMaterial(
 	textureImage,
 	noiseAmplitude = 0.1,
 	noiseFrequency = 3,
-	noiseSpeed = 0.1
+	noiseSpeed = 0.1,
+	fillRGB
 ) {
 	return new THREE.ShaderMaterial({
 		vertexShader: vertShader,
@@ -105,6 +110,16 @@ function createShaderMaterial(
 			},
 			uNoiseSpeed: {
 				value: noiseSpeed,
+			},
+			uColor: {
+				value: fillRGB
+					? new THREE.Vector4(
+							fillRGB.r > 0 ? fillRGB.r / 255 : 0,
+							fillRGB.g > 0 ? fillRGB.g / 255 : 0,
+							fillRGB.b > 0 ? fillRGB.b / 255 : 0,
+							1.0
+					  )
+					: new THREE.Vector4(1, 1, 1, 1),
 			},
 		},
 	});
