@@ -1,0 +1,49 @@
+.icon-container.burger {
+	position: fixed;
+	top: 1rem;
+	right: 1rem;
+	z-index: 10;
+}
+
+.icon.burger rect {
+	transform-origin: center;
+	transition: transform 0.2s ease;
+}
+
+.icon.burger.open rect:nth-child(1) {
+	transform: rotate(135deg) translateY(31.25%);
+}
+
+.icon.burger.open rect:nth-child(2) {
+	transform: rotate(-135deg);
+}
+
+.icon.burger.open rect:nth-child(3) {
+	transform: rotate(135deg) translateY(-31.25%);
+}
+
+.burger-nav {
+	position: fixed;
+	top: 0;
+	right: 0;
+	max-width: 100vw;
+	max-height: 100vh;
+	padding: 3rem 1rem;
+	transform: translateX(100%);
+	transition: transform 0.3s ease;
+	z-index: 5;
+}
+
+.burger-nav.show {
+	transform: translateX(0);
+}
+
+.burger-nav ul {
+	list-style-type: none;
+	font-size: 1.5rem;
+}
+
+.burger-nav ul li {
+	padding: 1em 0;
+	text-align: right;
+}

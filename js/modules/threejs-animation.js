@@ -9,9 +9,9 @@
 import * as THREE from 'https://threejs.org/build/three.module.js';
 import { createShaderMaterial } from './shaders.js';
 
-function createAnimation(container, images, dpr = 1) {
+function createAnimation(container, images, fillColor = null) {
+	const dpr = 1;
 	const scene = new THREE.Scene();
-	const clock = new THREE.Clock();
 	const renderer = new THREE.WebGLRenderer({
 		alpha: true,
 		antialias: false,
@@ -29,7 +29,7 @@ function createAnimation(container, images, dpr = 1) {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	$(container).append(renderer.domElement);
 
-	const rows = 5;
+	const rows = 4;
 	const cols = Math.floor(camera.aspect * rows);
 
 	const imageTexture = createImageGrid(
@@ -43,23 +43,27 @@ function createAnimation(container, images, dpr = 1) {
 
 	const mesh = new THREE.Mesh(
 		new THREE.PlaneGeometry(camera.aspect * 2, 2, 1, 1),
-		createShaderMaterial(imageTexture, 0.3, 5, 0.2)
+		createShaderMaterial(imageTexture, 0.3, 5, 0.005)
 	);
 
 	scene.add(mesh);
 
+	let frameCount = 0;
 	let animating = true;
 
 	function animate() {
-		if (!animating) return;
 		try {
-			mesh.material.uniforms.uTime.value = clock.getElapsedTime();
+			if (animating) {
+				frameCount++;
+				mesh.material.uniforms.uTime.value = frameCount;
+				requestAnimationFrame(animate);
+			}
 			renderer.render(scene, camera);
 		} catch (e) {
 			console.error(e);
+			animating = false;
 			return;
 		}
-		requestAnimationFrame(animate);
 	}
 
 	$(window).on('resize', () => {
@@ -68,7 +72,7 @@ function createAnimation(container, images, dpr = 1) {
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	});
 
-	return {
+	const animation = {
 		start() {
 			animating = true;
 			animate();
@@ -80,7 +84,20 @@ function createAnimation(container, images, dpr = 1) {
 			animating = !animating;
 			animating && animate();
 		},
+		setColor(css) {
+			const color = new THREE.Color(css);
+			if (!Object.keys(color).length) return;
+			mesh.material.uniforms.uColor.value = new THREE.Vector4(
+				color.r,
+				color.g,
+				color.b,
+				1.0
+			);
+			if (!animating) animate();
+		},
 	};
+	if (fillColor) animation.setColor(fillColor);
+	return animation;
 }
 
 function createImageGrid(
