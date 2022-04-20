@@ -1,9 +1,11 @@
-import { createAnimation } from './modules/threejs-animation.js';
+import { createAnimation } from './animation.js';
+import {smileyFill, smileyNoFill} from "../assets";
+
 
 const animation = createAnimation(
 	'.animation-container',
-	[...$('.smiley.template')],
-	getComputedStyle(document.body).getPropertyValue('accent-color')
+	[smileyFill, smileyNoFill],
+	// getComputedStyle(document.body).getPropertyValue('accent-color') || null
 );
 
 animation.start();

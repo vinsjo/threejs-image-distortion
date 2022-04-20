@@ -1,15 +1,7 @@
-/**
- * @module smiley-animation
- * @requires jQuery
- * @requires jCanvas
- * @requires THREE
- * @requires shaders
- * @requires helpers
- */
-import * as THREE from 'https://threejs.org/build/three.module.js';
+import * as THREE from "three";
 import { createShaderMaterial } from './shaders.js';
 
-function createAnimation(container, images, fillColor = null) {
+function createAnimation(container, images, fillColor = "#ffffff") {
 	const dpr = 1;
 	const scene = new THREE.Scene();
 	const renderer = new THREE.WebGLRenderer({

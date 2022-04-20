@@ -1,0 +1,26 @@
+{
+  "name": "threejs-image-distortion",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "snowpack dev",
+    "build": "snowpack build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinsjo/threejs-image-distortion.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vinsjo/threejs-image-distortion/issues"
+  },
+  "homepage": "https://github.com/vinsjo/threejs-image-distortion#readme",
+  "devDependencies": {
+    "snowpack": "^3.8.8"
+  },
+  "dependencies": {
+    "three": "^0.139.2"
+  }
+}
