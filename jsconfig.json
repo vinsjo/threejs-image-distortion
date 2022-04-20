@@ -1,5 +1,5 @@
 {
 	"typeAcquisition": {
-		"include": ["jquery"]
+		"include": ["jquery", "three"]
 	}
 }

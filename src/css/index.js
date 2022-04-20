@@ -1,2 +1,1 @@
-import "./main.css";
-import "./burger.css";
+import './main.css';

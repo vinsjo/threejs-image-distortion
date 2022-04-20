@@ -3,7 +3,6 @@
 	/* --foreground-color: rgb(255, 255, 255); */
 	--foreground-color: white;
 	--accent-color: rgb(134, 27, 27);
-	/* --background-color: rgb(35, 39, 169); */
 	--background-color: rgb(27, 30, 124);
 }
 * {
@@ -31,6 +30,17 @@ a {
 	color: inherit;
 }
 
+.animation-container,
+.animation-caption {
+	opacity: 0;
+	transition: opacity 0.5s ease-in;
+}
+
+.animation-container.show,
+.animation-caption.show {
+	opacity: 1;
+}
+
 .animation-container {
 	position: fixed;
 	top: 0;
@@ -38,23 +48,24 @@ a {
 	left: 0;
 	right: 0;
 	z-index: -1;
-}
-canvas {
-	width: 100%;
-	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
-header {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: 0;
-	padding: 0.5rem 1rem;
-	display: flex;
-	justify-content: flex-start;
-	align-items: center;
-	overflow: visible;
-	z-index: 5;
+.animation-caption {
+	position: relative;
+	min-width: fit-content;
+	z-index: 1;
+	padding: 0.5em;
+	border-radius: 0.5em;
+}
+
+.animation-container canvas {
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	inset: 0;
 }
 
 .icon-container {

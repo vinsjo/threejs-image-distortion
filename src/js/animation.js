@@ -1,114 +1,161 @@
-import * as THREE from "three";
-import { createShaderMaterial } from './shaders.js';
+import * as THREE from 'three';
+import { vertShader, fragShader } from './shaders';
+import { preloadImages } from './utils';
+import { smileyFill, smileyNoFill } from '../assets';
 
-function createAnimation(container, images, fillColor = "#ffffff") {
-	const dpr = 1;
+function initAnimation() {
+	setTimeout(() => {
+		$('.animation-caption').addClass('show');
+	}, 1000);
+	const dpr = window.devicePixelRatio || 1;
 	const scene = new THREE.Scene();
 	const renderer = new THREE.WebGLRenderer({
 		alpha: true,
 		antialias: false,
 	});
 
-	const camera = new THREE.PerspectiveCamera(
-		50,
-		window.innerWidth / window.innerHeight,
-		1,
-		500
-	);
-	camera.position.z = 1;
+	$('.animation-container').append(renderer.domElement);
+
+	const canvasRect = renderer.domElement.getBoundingClientRect();
 
 	renderer.setPixelRatio(dpr);
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	$(container).append(renderer.domElement);
+	renderer.setSize(canvasRect.width, canvasRect.height, false);
 
-	const rows = 4;
-	const cols = Math.floor(camera.aspect * rows);
-
-	const imageTexture = createImageGrid(
-		images,
-		rows,
-		cols,
-		window.innerWidth * dpr,
-		window.innerHeight * dpr,
-		0.2
+	const camera = new THREE.PerspectiveCamera(
+		25,
+		canvasRect.width / canvasRect.height,
+		0.1,
+		1000
 	);
 
-	const mesh = new THREE.Mesh(
-		new THREE.PlaneGeometry(camera.aspect * 2, 2, 1, 1),
-		createShaderMaterial(imageTexture, 0.3, 5, 0.005)
-	);
+	camera.position.z = 2;
 
-	scene.add(mesh);
+	const animationSpeed = 0.5;
 
 	let frameCount = 0;
-	let animating = true;
+	let isAnimating = false;
+	let mesh = null;
 
-	function animate() {
-		try {
-			if (animating) {
-				frameCount++;
-				mesh.material.uniforms.uTime.value = frameCount;
-				requestAnimationFrame(animate);
-			}
-			renderer.render(scene, camera);
-		} catch (e) {
-			console.error(e);
-			animating = false;
-			return;
-		}
+	function updateFrameCount() {
+		if (!mesh) return;
+		frameCount++;
+		mesh.material.uniforms.uTime.value = frameCount * animationSpeed;
 	}
 
-	$(window).on('resize', () => {
-		camera.aspect = window.innerWidth / window.innerHeight;
-		camera.updateProjectionMatrix();
-		renderer.setSize(window.innerWidth, window.innerHeight);
-	});
+	function renderScene() {
+		updateFrameCount();
+		renderer.render(scene, camera);
+	}
 
 	const animation = {
 		start() {
-			animating = true;
+			isAnimating = true;
 			animate();
 		},
 		stop() {
-			animating = false;
+			isAnimating = false;
 		},
 		toggle() {
-			animating = !animating;
-			animating && animate();
+			isAnimating ? this.stop() : this.start();
 		},
-		setColor(css) {
-			const color = new THREE.Color(css);
-			if (!Object.keys(color).length) return;
-			mesh.material.uniforms.uColor.value = new THREE.Vector4(
-				color.r,
-				color.g,
-				color.b,
-				1.0
-			);
-			if (!animating) animate();
+		get isAnimating() {
+			return frameCount < 3 || isAnimating;
 		},
 	};
-	if (fillColor) animation.setColor(fillColor);
+
+	function animate() {
+		if (!animation.isAnimating) return;
+		renderScene();
+		requestAnimationFrame(animate);
+	}
+
+	function onTextureLoad(texture) {
+		if (!texture) throw 'Failed Loading Texture :(';
+		mesh = new THREE.Mesh(
+			new THREE.PlaneGeometry(canvasRect.width / canvasRect.height, 1),
+			new THREE.ShaderMaterial({
+				vertexShader: vertShader,
+				fragmentShader: fragShader,
+				transparent: true,
+				side: THREE.DoubleSide,
+				uniforms: {
+					uTime: { value: 0.0 },
+					uTexture: {
+						value: new THREE.TextureLoader().load(texture),
+					},
+					uNoiseFreq: {
+						value: 5,
+					},
+					uNoiseAmp: {
+						value: 0.2,
+					},
+					uNoiseLimit: {
+						value: 0.2,
+					},
+					uNoiseSpeed: {
+						value: 0.01,
+					},
+				},
+			})
+		);
+		scene.add(mesh);
+		animation.start();
+		$('.animation-container').addClass('show');
+		setTimeout(() => {
+			$('.animation-caption').addClass('show');
+		}, 500);
+	}
+
+	const rows = Math.floor(Math.random() * 4) + 1;
+	const cols = Math.ceil(canvasRect.width / (canvasRect.height / rows));
+
+	createImageGrid(
+		[smileyFill, smileyNoFill],
+		rows,
+		cols,
+		canvasRect.width * dpr,
+		canvasRect.height * dpr,
+		0.25,
+		0.25
+	)
+		.then(onTextureLoad)
+		.catch((e) => console.error(e));
+
+	$(window).on('resize', () => {
+		const canvasRect = renderer.domElement.getBoundingClientRect();
+		camera.aspect = canvasRect.width / canvasRect.height;
+		camera.updateProjectionMatrix();
+		renderer.setSize(canvasRect.width, canvasRect.height, false);
+	});
+
 	return animation;
 }
 
-function createImageGrid(
-	images,
+async function createImageGrid(
+	imageURLs,
 	rows,
 	cols,
 	width = 1024,
 	height = 1024,
-	paddingFraction = 0.25
+	cellPaddingRatio = 0.2,
+	outerPaddingRatio = 0.1
 ) {
+	const images = await preloadImages(imageURLs);
+	if (!images.length) return false;
+
 	const imgSize = {
-		width: Math.max(...images.map(img => img.naturalWidth)),
-		height: Math.max(...images.map(img => img.naturalHeight)),
+		width: Math.max(...images.map((img) => img.naturalWidth)),
+		height: Math.max(...images.map((img) => img.naturalHeight)),
 	};
+
+	const outerPadding = Math.min(width, height) * outerPaddingRatio;
+
 	const cell = {
-		width: Math.floor(width / cols),
-		height: Math.floor(height / rows),
+		width: Math.floor((width - outerPadding * 2) / cols),
+		height: Math.floor((height - outerPadding * 2) / rows),
 	};
-	const padding = Math.min(cell.width, cell.height) * paddingFraction;
+
+	const padding = Math.min(cell.width, cell.height) * cellPaddingRatio;
 
 	const scale =
 		(Math.min(cell.width, cell.height) - padding) /
@@ -126,8 +173,8 @@ function createImageGrid(
 			const img = images[Math.floor(Math.random() * images.length)];
 			cnv.drawImage({
 				source: img,
-				x: col * cell.width + offset.x,
-				y: row * cell.height + offset.y,
+				x: outerPadding + col * cell.width + offset.x,
+				y: outerPadding + row * cell.height + offset.y,
 				width: imgSize.width * scale,
 				height: imgSize.height * scale,
 				fromCenter: false,
@@ -137,4 +184,4 @@ function createImageGrid(
 	return cnv.getCanvasImage('png');
 }
 
-export { createAnimation, createImageGrid };
+export { initAnimation };
