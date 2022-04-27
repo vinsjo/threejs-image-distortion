@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { vertShader, fragShader } from './shaders';
 import { preloadImages } from './utils';
-import { smileyFill, smileyNoFill } from '../assets';
+
+const smileyNoFill = '/assets/smiley-nofill.svg';
+const smileyFill = '/assets/smiley.svg';
 
 function initAnimation() {
 	setTimeout(() => {
