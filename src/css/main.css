@@ -57,8 +57,10 @@ a {
 	position: relative;
 	min-width: fit-content;
 	z-index: 1;
+	font-size: 6rem;
 	padding: 0.5em;
 	border-radius: 0.5em;
+	text-shadow: 0.05em 0.05em var(--background-color);
 }
 
 .animation-container canvas {
