@@ -3,31 +3,36 @@ import { vertShader, fragShader } from './shaders';
 import { preloadImages } from './utils';
 import smileyNoFill from '../assets/smiley-nofill.svg';
 import smileyFill from '../assets/smiley.svg';
+import workerSrc from './animation-worker.js?url';
 
 function initAnimation() {
-	setTimeout(() => {
-		$('.animation-caption').addClass('show');
-	}, 1000);
+	const cnv = $('#cnv')[0];
+	if (!cnv.transferControlToOffscreen) {
+		$(cnv).hide();
+		$('#noOffscreenCnv').show();
+		$('.animation-container').addClass('show');
+		return;
+	}
+
 	const dpr = window.devicePixelRatio || 1;
 	const scene = new THREE.Scene();
-	const renderer = new THREE.WebGLRenderer({
-		alpha: true,
-		antialias: false,
-	});
 
-	$('.animation-container').append(renderer.domElement);
+	const offscreen = cnv.transferControlToOffscreen();
 
-	const canvasRect = renderer.domElement.getBoundingClientRect();
+	const worker = new Worker(workerSrc, { type: 'module' });
+	worker.postMessage({ type: 'main', canvas: offscreen }, [offscreen]);
 
-	renderer.setPixelRatio(dpr);
-	renderer.setSize(canvasRect.width, canvasRect.height, false);
-
-	const camera = new THREE.PerspectiveCamera(
-		25,
-		canvasRect.width / canvasRect.height,
-		0.1,
-		1000
-	);
+	function sendSize() {
+		worker.postMessage({
+			type: 'size',
+			width: cnv.clientWidth,
+			height: cnv.clientHeight,
+		});
+	}
+	$(window).on('resize', sendSize);
+	sendSize();
+	// renderer.setPixelRatio(dpr);
+	// renderer.setSize(canvasRect.width, canvasRect.height, false);
 
 	camera.position.z = 2;
 
@@ -73,7 +78,7 @@ function initAnimation() {
 	function onTextureLoad(texture) {
 		if (!texture) throw 'Failed Loading Texture :(';
 		mesh = new THREE.Mesh(
-			new THREE.PlaneGeometry(canvasRect.width / canvasRect.height, 1),
+			new THREE.PlaneGeometry(cnvRect.width / cnvRect.height, 1),
 			new THREE.ShaderMaterial({
 				vertexShader: vertShader,
 				fragmentShader: fragShader,
@@ -108,26 +113,19 @@ function initAnimation() {
 	}
 
 	const rows = Math.floor(Math.random() * 4) + 1;
-	const cols = Math.ceil(canvasRect.width / (canvasRect.height / rows));
+	const cols = Math.ceil(cnvRect.width / (cnvRect.height / rows));
 
 	createImageGrid(
 		[smileyFill, smileyNoFill],
 		rows,
 		cols,
-		canvasRect.width * dpr,
-		canvasRect.height * dpr,
+		cnvRect.width * dpr,
+		cnvRect.height * dpr,
 		0.25,
 		0.25
 	)
 		.then(onTextureLoad)
 		.catch((e) => console.error(e));
-
-	$(window).on('resize', () => {
-		const canvasRect = renderer.domElement.getBoundingClientRect();
-		camera.aspect = canvasRect.width / canvasRect.height;
-		camera.updateProjectionMatrix();
-		renderer.setSize(canvasRect.width, canvasRect.height, false);
-	});
 
 	return animation;
 }
